@@ -5,5 +5,11 @@
     "sell_in_progress": "Sell in progress ...",
     "blip_name": "Carcass Sell",
     "too_far": "You are too far from the carcass",
-    "stop_farm": "Respect the biodiversity change of place"
+    "stop_farm": "Respect the biodiversity change of place",
+    "cant_hun": "You can't hunt in this area!",
+    "near_human": "You can't do this when you're near a person!",
+    "cooldown_bait": "You can order new bait later",
+    "bait": "Placing bait...",
+    "baited": "Bait placed, now go away and wait patiently!",
+
 }

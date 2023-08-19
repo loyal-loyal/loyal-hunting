@@ -1,7 +1,7 @@
 lib.locale()
 local carryCarcass = 0
 local heaviestCarcass = 0
-QBCore = exports['qb-core']:GetCoreObject()
+QBCore = exports[Config.Core]:GetCoreObject()
 
 local animals = {}
 local listItemCarcass= {}
@@ -23,11 +23,11 @@ exports['qb-target']:AddTargetModel(animals, {
             Wait(500)
             local found, player = GetClosestPlayerMenu()
             if not isValidZone() then
-                QBCore.Functions.Notify("Bạn không thể săn bắn trong khu vực này!", "error")
+                QBCore.Functions.Notify(locale('cant_hun'), "error")
                 return
             end
             if found then
-                QBCore.Functions.Notify("Bạn không thể làm điều này khi bạn đang ở gần một người!", "error")
+                QBCore.Functions.Notify(locale('near_human'), "error")
                 return
             end
             QBCore.Functions.Progressbar("pickup_carcass", locale('pickup_carcass'), 3000, false, false, {
@@ -52,12 +52,14 @@ exports['qb-target']:AddTargetModel(animals, {
 })
 
 Citizen.CreateThread(function ()
+    Wait(60000)
+
     while true do
         Wait(1000)
         FreezeEntityPosition(playerPed, false)
         heaviestCarcass = 0
         for key, value in pairs(listItemCarcass) do
-            if exports['lj-inventory']:HasItem(value..'1',1) or exports['lj-inventory']:HasItem(value..'2',1) or exports['lj-inventory']:HasItem(value..'3',1) then
+            if exports[Config.Inventory]:HasItem(value..'1',1) or exports[Config.Inventory]:HasItem(value..'2',1) or exports[Config.Inventory]:HasItem(value..'3',1) then
                 heaviestCarcass = CarcassByItem[value]
                 break
             end
@@ -212,8 +214,6 @@ end)
 
 local baitLocation = nil
 local baitLastPlaced = 0
-local targetedEntity = nil
-local targetedEntityCoord = nil
 
 local baitDistanceInUnits = 40
 local spawnDistanceRadius = 30
@@ -282,37 +282,7 @@ AddEventHandler('QBCore:Player:UpdatePlayerData', function()
     data.position = QBCore.Functions.GetCoords(PlayerPedId())
     TriggerServerEvent('QBCore:UpdatePlayer', data)
 end)
-Citizen.CreateThread(function()
-    while true do
-        local idle = 250
-        local PlayerPed = PlayerPedId()
-        local entity, entityType, entityCoords = GetEntityPlayerIsLookingAt(3.0, 0.2, 286, PlayerPed)
 
-        if entity and entityType ~= 0 then
-            if entity ~= CurrentTarget then
-                CurrentTarget = entity
-                TriggerEvent('target:changed', CurrentTarget, entityType, entityCoords)
-            end
-        elseif CurrentTarget then
-            CurrentTarget = nil
-            TriggerEvent('target:changed', CurrentTarget)
-        end
-
-        Citizen.Wait(idle)
-    end
-end)
-
--- Citizen.CreateThread(function() 
---     blip = AddBlipForCoord(-679.89,5838.79,16.33)
---     SetBlipSprite(blip, 141)
---     SetBlipDisplay(blip, 4)
---     SetBlipScale(blip, 0.8)
---     SetBlipColour(blip, 1)
---     SetBlipAsShortRange(blip, true)
---     BeginTextCommandSetBlipName("STRING")
---     AddTextComponentString("Săn Thú")
---     EndTextCommandSetBlipName(blip)
--- end)
 
 function GetEntityPlayerIsLookingAt(pDistance, pRadius, pFlag, pIgnore)
     local distance = pDistance or 3.0
@@ -341,11 +311,6 @@ function RayCast(origin, target, options, ignoreEntity, radius)
     return GetShapeTestResult(handle)
 end
 
-RegisterNetEvent("target:changed")
-AddEventHandler("target:changed", function(pEntity, type, coords)
-    targetedEntity = pEntity
-    targetedEntityCoord = coords
-end)
 
 function isValidZone()
     return validHuntingZones[GetLabelText(GetNameOfZone(GetEntityCoords(PlayerPedId())))] == true
@@ -440,25 +405,25 @@ function lastAnimalExists(entity)
 end
 
 
-RegisterNetEvent('qb-hunting:use-item')
-AddEventHandler('qb-hunting:use-item', function(item)
+RegisterNetEvent('loyal-hunting:use-item')
+AddEventHandler('loyal-hunting:use-item', function(item)
     if GetGameTimer() > lastTime then
         lastTime = GetGameTimer() + 3000
         if item == "huntingbait" then
             if not isValidZone() then
-                QBCore.Functions.Notify("Bạn không thể săn bắn trong khu vực này!", "error")
+                QBCore.Functions.Notify(locale('cant_hun'), "error")
                 return
             end
-            if baitLastPlaced ~= 0 and GetGameTimer() < (baitLastPlaced + 60000) then -- 5 minutes
-                QBCore.Functions.Notify("Bạn có thể đặt một mồi trong cứ sau 1 phút nữa!", "error")
+            if baitLastPlaced ~= 0 and GetGameTimer() < (baitLastPlaced + Config.CoolDownBait * 1000) then 
+                QBCore.Functions.Notify(locale('cooldown_bait')..Config.CoolDownBait..'seconds!', "error")
                 return
             end
             if bussy then
                 bussy = false
                 baitLocation = nil
                 TaskStartScenarioInPlace(PlayerPedId(), "WORLD_HUMAN_GARDENER_PLANT", 0, true)
-				TriggerServerEvent("qb-hunting:removeItem", item)
-                QBCore.Functions.Progressbar("placing_bait", "Đang đặt mồi...", 15000, false, true, { 
+				TriggerServerEvent("loyal-hunting:removeItem", item)
+                QBCore.Functions.Progressbar("placing_bait", locale('bait'), 15000, false, true, { 
                     disableMovement = false,
 					disableCarMovement = false,
 					disableMouse = false,
@@ -468,7 +433,7 @@ AddEventHandler('qb-hunting:use-item', function(item)
                     ClearPedTasksImmediately(PlayerPedId())
                     baitLastPlaced = GetGameTimer()
                     baitLocation = GetEntityCoords(PlayerPedId())
-                    QBCore.Functions.Notify("Mồi đã đặt, bây giờ đi ra xa và kiên nhẫn đợi!")
+                    QBCore.Functions.Notify(locale('baited'))
                     
                     baitDown()
                     bussy = true 
@@ -478,7 +443,7 @@ AddEventHandler('qb-hunting:use-item', function(item)
             end
         end
     else
-        QBCore.Functions.Notify("Bạn có thể sử dụng mục này trong 1 phút!", "error")
+        QBCore.Functions.Notify(locale('cooldown_bait')..Config.CoolDownBait..'seconds!', "error")
     end
 end)
 
@@ -494,16 +459,15 @@ end
 
 -------------------shop--------------------------------------
 local pedSpawned = false
-local refreshPed = false
 
 Citizen.CreateThread(function()
     exports['qb-target']:AddTargetModel("ig_hunter", {
         options = {
             {
                 type = "client",
-                event = "qb-hunting:shop",
+                event = "loyal-hunting:shop",
                 icon = "fas fa-leaf",
-                label = "Cửa hàng",
+                label = "Shop",
             },
         },
         distance = 4.0
@@ -514,11 +478,10 @@ Citizen.CreateThread(function()
     while true do
         Citizen.Wait(1000)
         local pedCoords = GetEntityCoords(PlayerPedId())
-        local dst = #(Hunting.PedCoords - pedCoords) 
+        local dst = #(Config.PedCoords - pedCoords) 
         if dst < 40 and pedSpawned == false then
-            TriggerEvent('qb-hunting:spawnJobPed', Hunting.PedCoords, Hunting.PedCoordsHeading)
+            TriggerEvent('loyal-hunting:spawnJobPed', Config.PedCoords, Config.PedCoordsHeading)
             pedSpawned = true
-            refreshPed = true
         end
         if dst >= 41  then
             if DoesEntityExist(jobPed) then
@@ -529,9 +492,9 @@ Citizen.CreateThread(function()
     end
 end)
 
-RegisterNetEvent('qb-hunting:spawnJobPed')
-AddEventHandler('qb-hunting:spawnJobPed',function(coords, heading)
-    local hash = Hunting.PedHash
+RegisterNetEvent('loyal-hunting:spawnJobPed')
+AddEventHandler('loyal-hunting:spawnJobPed',function(coords, heading)
+    local hash = Config.PedHash
     if not HasModelLoaded(hash) then
         RequestModel(hash)
         Wait(10)
@@ -546,9 +509,9 @@ AddEventHandler('qb-hunting:spawnJobPed',function(coords, heading)
     SetModelAsNoLongerNeeded(hash)
 end)
 
-RegisterNetEvent('qb-hunting:shop')
-AddEventHandler('qb-hunting:shop',function()  
-    TriggerServerEvent("inventory:server:OpenInventory", "shop", "hunting", Hunting.Items)
+RegisterNetEvent('loyal-hunting:shop')
+AddEventHandler('loyal-hunting:shop',function()  
+    TriggerServerEvent("inventory:server:OpenInventory", "shop", "hunting", Config.Items)
 end)
 
 ----------------------block fire human----------------------------

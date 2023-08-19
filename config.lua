@@ -1,5 +1,11 @@
 Config = {}
 
+Config.CoolDownBait = 60 --seconds
+
+Config.Core = 'qb-core'
+
+Config.Inventory = 'lj-inventory' -- 'lj-inventory', 'qb-inventory'
+
 Config.carcass  = {
     [`a_c_boar`]=           'carcass_boar',
     [`a_c_chickenhawk`] =   'carcass_hawk',
@@ -22,9 +28,7 @@ Config.carcassPos  = {
 }
 
 Config.goodWeapon = {
-    -- `WEAPON_MUSKET`,
     `WEAPON_SNIPERRIFLE`,
-    -- `WEAPON_KNIFE`
 }
 
 Config.sellPrice = {
@@ -37,12 +41,6 @@ Config.sellPrice = {
     ['carcass_rabbit'] =    {min = 40,max = 40}
 }
 
-
-Config.gradeMultiplier = {
-    ['★☆☆'] = 0.5, -- not killed by a goodWeapon
-    ['★★☆'] = 1.0, -- killed by a goodWeapon
-    ['★★★'] = 2.0  -- headshot
-}
 
 Config.headshotBones = {
     [`a_c_boar`]=           {31086},
@@ -58,16 +56,14 @@ Config.antiFarm = {
     enable = true, size = 70.0, time = 10 * 60, maxAmount = 3, personal = true
 }
 
-Hunting = {}
+Config.PedHash = `ig_hunter`
+Config.PedCoords = vector3(-679.07, 5834.42, 16.33)
+Config.PedCoordsHeading = 126.27
 
-Hunting.PedHash = `ig_hunter`
-Hunting.PedCoords = vector3(-679.07, 5834.42, 16.33)
-Hunting.PedCoordsHeading = 126.27
-
-Hunting.Items = {
+Config.Items = {
     label = "Shop",
     slots = 20,
-    items = { 
+    items = {
         [1] = {
             name = 'huntingbait',
             price = 25, 
@@ -102,3 +98,4 @@ Hunting.Items = {
         },
     },
 }
+

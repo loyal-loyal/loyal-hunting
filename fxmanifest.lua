@@ -5,7 +5,7 @@ game 'gta5'
 name "loyal-hunting"
 description "Hunting Script made for QBCore"
 author "loyal"
-version "1.0.0"
+version "1.1.0"
 
 dependencies {
 	'/server:5181',

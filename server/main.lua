@@ -1,12 +1,6 @@
 lib.locale()
 local antifarm = {}
-QBCore = exports['qb-core']:GetCoreObject()
-
--- lib.versionCheck('N-fire/loyal-hunting')
--- if not lib.checkDependency('ox_lib', '2.1.0') then error('You don\'t have latest version of ox_lib') end
--- if not lib.checkDependency('ox_inventory', '2.7.4') then error('You don\'t have latest version of ox_inventory') end
--- if not lib.checkDependency('qtarget', '2.1.0') then error('You don\'t have latest version of qtarget') end
-
+QBCore = exports[Config.Core]:GetCoreObject()
 
 RegisterNetEvent('loyal-hunting:harvestCarcass')
 AddEventHandler('loyal-hunting:harvestCarcass',function (entityId, bone)
@@ -105,56 +99,23 @@ function map(x, in_min, in_max, out_min, out_max)
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 end
 
--- lib.addCommand('group.admin', 'giveCarcass', function(source, args)
---     for key, value in pairs(Config.carcass) do
---         exports.ox_inventory:AddItem(source, value, 1, {type = '★☆☆', image =  value..1})
---         exports.ox_inventory:AddItem(source, value, 1, {type = '★★☆', image =  value..2})
---         exports.ox_inventory:AddItem(source, value, 1, {type = '★★★', image =  value..3})
---     end
--- end)
-
--- lib.addCommand('group.admin', 'spawnPed', function(source, args)
---     local playerCoords = GetEntityCoords(GetPlayerPed(source))
---     local entity = CreatePed(0, GetHashKey(args.hash), playerCoords, true, true)
--- end,{'hash:string'})
-
--- lib.addCommand('group.admin', 'printAntifarm', function(source, args)
---     print(json.encode(antifarm,{indent = true}))
--- end)
-
--- lib.addCommand('group.admin', 'printInv', function(source, args)
---     print(json.encode(exports.ox_inventory:Inventory(source).items,{indent = true}))
--- end)
-
-RegisterNetEvent('qb-fishing:server:RemoveBait', function()
-    local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
-    if not Player then return end
-
-    if Player.Functions.RemoveItem('huntingbait', 1) then
-        TriggerClientEvent('inventory:client:ItemBox', Player.PlayerData.source, QBCore.Shared.Items['huntingbait'], 'remove', 1)
-    end
-end)
-
--- hunting
-
 QBCore.Functions.CreateUseableItem('huntingbait', function(source)
-	TriggerClientEvent('qb-hunting:use-item', source, "huntingbait")
+	TriggerClientEvent('loyal-hunting:use-item', source, "huntingbait")
 end)
 
 QBCore.Functions.CreateUseableItem('huntingknife',function(source)
-    TriggerClientEvent('qb-hunting:use-item', source, "huntingknife")
+    TriggerClientEvent('loyal-hunting:use-item', source, "huntingknife")
 end)
 
-RegisterServerEvent("qb-hunting:removeItem")
-AddEventHandler("qb-hunting:removeItem", function(item)
+RegisterServerEvent("loyal-hunting:removeItem")
+AddEventHandler("loyal-hunting:removeItem", function(item)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src) 
     Player.Functions.RemoveItem(item, 1) 
 end) 
 
-RegisterServerEvent("qb-hunting:delete-ped")
-AddEventHandler("qb-hunting:delete-ped", function(ped)
+RegisterServerEvent("loyal-hunting:delete-ped")
+AddEventHandler("loyal-hunting:delete-ped", function(ped)
     local xPed = NetworkGetEntityFromNetworkId(ped)
     if DoesEntityExist(xPed) then
         DeleteEntity(xPed)
