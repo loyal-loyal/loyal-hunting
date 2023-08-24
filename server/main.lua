@@ -1,6 +1,23 @@
 lib.locale()
+
+if Config.Framework == 'qb-core' then
+    QBCore = exports['qb-core']:GetCoreObject()
+elseif Config.Framework == 'esx' then
+    ESX = exports["es_extended"]:getSharedObject()
+else
+    print('Your Framework Unsupported')
+    return
+end
+
+function notify(source,message,type)
+    if Config.Framework == 'qb-core' then 
+        TriggerClientEvent('QBCore:Notify', source, message, type)
+    else
+        TriggerClientEvent('esx:showNotification', source, message, type)
+    end
+end
+
 local antifarm = {}
-QBCore = exports[Config.Core]:GetCoreObject()
 
 RegisterNetEvent('loyal-hunting:harvestCarcass')
 AddEventHandler('loyal-hunting:harvestCarcass',function (entityId, bone)
@@ -18,16 +35,26 @@ AddEventHandler('loyal-hunting:harvestCarcass',function (entityId, bone)
                     grade = 3
                 end
             end
-            local src = source
-            local Player = QBCore.Functions.GetPlayer(src)
+            if Config.Inventory == 'ox_inventory' then
+                if exports.ox_inventory:CanCarryItem(source, item..grade , 1) then
+                    DeleteEntity(entity)
+                    exports.ox_inventory:AddItem(source, item..grade , 1)
+                else
+                    notify( source, locale('inventory_full'), "error")
+                end
+            else
+                local src = source
+                local Player = QBCore.Functions.GetPlayer(src)
                 Player.Functions.AddItem(item..grade, 1)
 			    TriggerClientEvent("inventory:client:ItemBox", source, QBCore.Shared.Items[item..grade], "add",1)
                 DeleteEntity(entity)
+            end            
+
         else
-            TriggerClientEvent('QBCore:Notify', source, locale('stop_farm'), "error")
+            notify(source, locale('stop_farm'), "error")
         end
     else
-        TriggerClientEvent('QBCore:Notify', source, locale('too_far'), "error")
+        notify(source, locale('too_far'), "error")
     end
 end)
 
@@ -41,32 +68,53 @@ function InTable(table, value)
 end
 
 --------------------- SELL -----------------------------------
-
-RegisterNetEvent('loyal-hunting:SellCarcass')
-AddEventHandler('loyal-hunting:SellCarcass',function (item)
-    local src = source
-	local Player = QBCore.Functions.GetPlayer(src)
-    for i= 1,3 do
-        local itemData = Player.Functions.GetItemByName(item..i)
-        if itemData then
-        if itemData.amount >= 1 then
-            if i >1 then
-                local reward = Config.sellPrice[item].max * i * 5
-            else
-                local reward = Config.sellPrice[item].max * i
+if Config.Framework == 'qb-core' then
+    RegisterNetEvent('loyal-hunting:SellCarcass')
+    AddEventHandler('loyal-hunting:SellCarcass',function (item)
+        local src = source
+    	local Player = QBCore.Functions.GetPlayer(src)
+        for i= 1,3 do
+            local itemData = Player.Functions.GetItemByName(item..i)
+            if itemData then
+            if itemData.amount >= 1 then
+                if i >1 then
+                    local reward = Config.sellPrice[item].max * i * 5
+                else
+                    local reward = Config.sellPrice[item].max * i
+                end
+                if  Player.Functions.RemoveItem(item..i, 1) then
+    			    TriggerClientEvent("inventory:client:ItemBox", source, QBCore.Shared.Items[item..i], "remove",1)
+    			    Player.Functions.AddMoney("cash",reward, "hunting")
+                end
+                break
             end
-            if  Player.Functions.RemoveItem(item..i, 1) then
-			    TriggerClientEvent("inventory:client:ItemBox", source, QBCore.Shared.Items[item..i], "remove",1)
-			    Player.Functions.AddMoney("cash",reward, "hunting")
             end
-            break
         end
+    end)
+else
+    RegisterNetEvent('loyal-hunting:SellCarcass')
+    AddEventHandler('loyal-hunting:SellCarcass',function (item)
+        local src = source
+	    local Player = ESX.GetPlayerFromId(src)
+        for i= 1,3 do
+            if exports.ox_inventory:GetItemCount(src, item..i) >= 1 then
+                if i >1 then
+                    local reward = Config.sellPrice[item].max * i * 5
+                else
+                    local reward = Config.sellPrice[item].max * i
+                end
+                exports.ox_inventory:RemoveItem(src, item..i, 1)
+
+                if  exports.ox_inventory:RemoveItem(src, item..i, 1) then
+	    		    Player.addMoney(reward, "hunting")
+                end
+                break
+            end
         end
-    end
-    
-end)
+    end)
+end
 
-
+--------------------Antifarm------------------------------------------
 function Antifarm(source,coords)
     if Config.antiFarm.enable == false then return true end
     if Config.antiFarm.personal == false then
@@ -99,21 +147,43 @@ function map(x, in_min, in_max, out_min, out_max)
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 end
 
-QBCore.Functions.CreateUseableItem('huntingbait', function(source)
-	TriggerClientEvent('loyal-hunting:use-item', source, "huntingbait")
-end)
+--------------------------------Item-------------------------------------
+if Config.Framework == 'qb-core' then
+    QBCore.Functions.CreateUseableItem('huntingbait', function(source)
+    	TriggerClientEvent('loyal-hunting:use-item', source, "huntingbait")
+    end)
 
-QBCore.Functions.CreateUseableItem('huntingknife',function(source)
-    TriggerClientEvent('loyal-hunting:use-item', source, "huntingknife")
-end)
+    QBCore.Functions.CreateUseableItem('huntingknife',function(source)
+        TriggerClientEvent('loyal-hunting:use-item', source, "huntingknife")
+    end)
+else
+    ESX.RegisterUsableItem('huntingbait', function(source)
+        TriggerClientEvent('loyal-hunting:use-item', source, "huntingbait")
+    end)
+    
+    ESX.RegisterUsableItem('huntingknife',function(source)
+        TriggerClientEvent('loyal-hunting:use-item', source, "huntingknife")
+    end)
+end
 
-RegisterServerEvent("loyal-hunting:removeItem")
-AddEventHandler("loyal-hunting:removeItem", function(item)
-    local src = source
-    local Player = QBCore.Functions.GetPlayer(src) 
-    Player.Functions.RemoveItem(item, 1) 
-end) 
-
+if Config.Inventory == 'ox_inventory' then
+    RegisterServerEvent("loyal-hunting:removeItem")
+    AddEventHandler("loyal-hunting:removeItem", function(item)
+        local src = source
+        exports.ox_inventory:RemoveItem(src, item, 1)
+    end) 
+    exports.ox_inventory:RegisterShop('HuntingShop', {
+        name = 'Hunting shop',
+        inventory = Config.OXShop,
+    })
+else
+    RegisterServerEvent("loyal-hunting:removeItem")
+    AddEventHandler("loyal-hunting:removeItem", function(item)
+        local src = source
+        local Player = QBCore.Functions.GetPlayer(src) 
+        Player.Functions.RemoveItem(item, 1) 
+    end) 
+end
 RegisterServerEvent("loyal-hunting:delete-ped")
 AddEventHandler("loyal-hunting:delete-ped", function(ped)
     local xPed = NetworkGetEntityFromNetworkId(ped)

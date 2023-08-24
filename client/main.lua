@@ -1,98 +1,127 @@
 lib.locale()
+
+if Config.Framework == 'qb-core' then
+    QBCore = exports['qb-core']:GetCoreObject()
+elseif Config.Framework == 'esx' then
+    ESX = nil
+    CreateThread(function()
+	    while ESX == nil do
+		    ESX = exports["es_extended"]:getSharedObject()
+		    Wait(1)
+	    end
+    end)
+else
+    print('Your Framework Unsupported')
+    return
+end
+
+----------------------Notify------------------------------------------
+
+function notify(message,type)
+    if Config.Framework == 'qb-core' then 
+        QBCore.Functions.Notify(message,type)
+    else
+        ESX.ShowNotification(message, type)
+    end
+end
+
+----------------------------Inventory Animation--------------------------------
 local carryCarcass = 0
 local heaviestCarcass = 0
-QBCore = exports[Config.Core]:GetCoreObject()
-
 local animals = {}
 local listItemCarcass= {}
 local CarcassByItem= {}
+
 for key, value in pairs(Config.carcass) do
     table.insert(animals, key)
     table.insert(listItemCarcass, value)
     CarcassByItem[value] = key
 end
 
-exports['qb-target']:AddTargetModel(animals, {
-    options = {
-    {   icon = "fa-solid fa-paw",
-        label = locale('pickup_carcass'),
-        item = 'huntingknife',
-        action = function (entity)
-            local retval, bone = GetPedLastDamageBone(entity)
-            TaskTurnPedToFaceEntity(PlayerPedId(), entity, -1)
-            Wait(500)
-            local found, player = GetClosestPlayerMenu()
-            if not isValidZone() then
-                QBCore.Functions.Notify(locale('cant_hun'), "error")
-                return
-            end
-            if found then
-                QBCore.Functions.Notify(locale('near_human'), "error")
-                return
-            end
-            QBCore.Functions.Progressbar("pickup_carcass", locale('pickup_carcass'), 3000, false, false, {
-                disableMovement = true,
-                disableCarMovement = true,
-                disableMouse = false,
-                disableCombat = false,
-            }, {
-                animdict = 'amb@medic@standing@kneel@idle_a',
-                    anim = 'idle_a',
-                    flag = 1,
-            }, {}, {}, function()
-                TriggerServerEvent('loyal-hunting:harvestCarcass',NetworkGetNetworkIdFromEntity(entity),bone)
-            end)
-        end,
-        canInteract = function (entity)
-            return IsEntityDead(entity) 
-            -- return IsEntityDead(entity) and not IsEntityAMissionEntity(entity)
-        end,
-    } },
-    distance = 2.0
-})
-
 Citizen.CreateThread(function ()
     Wait(60000)
-
-    while true do
-        Wait(1000)
-        FreezeEntityPosition(playerPed, false)
-        heaviestCarcass = 0
-        for key, value in pairs(listItemCarcass) do
-            if exports[Config.Inventory]:HasItem(value..'1',1) or exports[Config.Inventory]:HasItem(value..'2',1) or exports[Config.Inventory]:HasItem(value..'3',1) then
-                heaviestCarcass = CarcassByItem[value]
-                break
+    if Config.Inventory == 'ox_inventory' then
+        while true do
+            Wait(1000)
+            FreezeEntityPosition(playerPed, false)
+            heaviestCarcass = 0
+            for key, value in pairs(listItemCarcass) do
+                if exports.ox_inventory:Search('count', value..'1')>0 or exports.ox_inventory:Search('count', value..'2')>0 or exports.ox_inventory:Search('count', value..'3')>0 then
+                    heaviestCarcass = CarcassByItem[value]
+                    break
+                end
+            end
+            if heaviestCarcass ~= 0 then
+                if carryCarcass==0 then
+                lib.requestModel(heaviestCarcass)
+                DeleteEntity(carryCarcass)
+                carryCarcass = CreatePed(1, heaviestCarcass, GetEntityCoords(PlayerPedId()), GetEntityHeading(PlayerPedId()), true, true)
+                SetEntityInvincible(carryCarcass, true)
+                SetEntityHealth(carryCarcass, 0)
+                local pos = Config.carcassPos[heaviestCarcass]
+                AttachEntityToEntity(carryCarcass, PlayerPedId(),11816, pos.xPos, pos.yPos, pos.zPos, pos.xRot, pos.yRot, pos.zRot, false, false, false, true, 2, true)
+                PlayCarryAnim()
+                elseif GetEntityModel(carryCarcass)~=heaviestCarcass then
+                    DeleteEntity(carryCarcass)
+                    carryCarcass = 0
+                    ClearPedSecondaryTask(PlayerPedId())
+                    Wait(100)
+                    lib.requestModel(heaviestCarcass)
+                    DeleteEntity(carryCarcass)
+                    carryCarcass = CreatePed(1, heaviestCarcass, GetEntityCoords(PlayerPedId()), GetEntityHeading(PlayerPedId()), true, true)
+                    SetEntityInvincible(carryCarcass, true)
+                    SetEntityHealth(carryCarcass, 0)
+                    local pos = Config.carcassPos[heaviestCarcass]
+                    AttachEntityToEntity(carryCarcass, PlayerPedId(),11816, pos.xPos, pos.yPos, pos.zPos, pos.xRot, pos.yRot, pos.zRot, false, false, false, true, 2, true)
+                    PlayCarryAnim()
+                end
+            else
+                DeleteEntity(carryCarcass)
+                carryCarcass = 0
+                ClearPedSecondaryTask(PlayerPedId())
             end
         end
-    if heaviestCarcass ~= 0 then
-        if carryCarcass==0 then
-        lib.requestModel(heaviestCarcass)
-        DeleteEntity(carryCarcass)
-        carryCarcass = CreatePed(1, heaviestCarcass, GetEntityCoords(PlayerPedId()), GetEntityHeading(PlayerPedId()), true, true)
-        SetEntityInvincible(carryCarcass, true)
-        SetEntityHealth(carryCarcass, 0)
-        local pos = Config.carcassPos[heaviestCarcass]
-        AttachEntityToEntity(carryCarcass, PlayerPedId(),11816, pos.xPos, pos.yPos, pos.zPos, pos.xRot, pos.yRot, pos.zRot, false, false, false, true, 2, true)
-        PlayCarryAnim()
-        elseif GetEntityModel(carryCarcass)~=heaviestCarcass then
-            DeleteEntity(carryCarcass)
-            carryCarcass = 0
-            ClearPedSecondaryTask(PlayerPedId())
-            Wait(100)
-            lib.requestModel(heaviestCarcass)
-            DeleteEntity(carryCarcass)
-            carryCarcass = CreatePed(1, heaviestCarcass, GetEntityCoords(PlayerPedId()), GetEntityHeading(PlayerPedId()), true, true)
-            SetEntityInvincible(carryCarcass, true)
-            SetEntityHealth(carryCarcass, 0)
-            local pos = Config.carcassPos[heaviestCarcass]
-            AttachEntityToEntity(carryCarcass, PlayerPedId(),11816, pos.xPos, pos.yPos, pos.zPos, pos.xRot, pos.yRot, pos.zRot, false, false, false, true, 2, true)
-            PlayCarryAnim()
-        end
     else
-        DeleteEntity(carryCarcass)
-        carryCarcass = 0
-        ClearPedSecondaryTask(PlayerPedId())
-    end
+        while true do
+            Wait(1000)
+            FreezeEntityPosition(playerPed, false)
+            heaviestCarcass = 0
+            for key, value in pairs(listItemCarcass) do
+                if exports[Config.Inventory]:HasItem(value..'1',1) or exports[Config.Inventory]:HasItem(value..'2',1) or exports[Config.Inventory]:HasItem(value..'3',1) then
+                    heaviestCarcass = CarcassByItem[value]
+                    break
+                end
+            end
+            if heaviestCarcass ~= 0 then
+                if carryCarcass==0 then
+                lib.requestModel(heaviestCarcass)
+                DeleteEntity(carryCarcass)
+                carryCarcass = CreatePed(1, heaviestCarcass, GetEntityCoords(PlayerPedId()), GetEntityHeading(PlayerPedId()), true, true)
+                SetEntityInvincible(carryCarcass, true)
+                SetEntityHealth(carryCarcass, 0)
+                local pos = Config.carcassPos[heaviestCarcass]
+                AttachEntityToEntity(carryCarcass, PlayerPedId(),11816, pos.xPos, pos.yPos, pos.zPos, pos.xRot, pos.yRot, pos.zRot, false, false, false, true, 2, true)
+                PlayCarryAnim()
+                elseif GetEntityModel(carryCarcass)~=heaviestCarcass then
+                    DeleteEntity(carryCarcass)
+                    carryCarcass = 0
+                    ClearPedSecondaryTask(PlayerPedId())
+                    Wait(100)
+                    lib.requestModel(heaviestCarcass)
+                    DeleteEntity(carryCarcass)
+                    carryCarcass = CreatePed(1, heaviestCarcass, GetEntityCoords(PlayerPedId()), GetEntityHeading(PlayerPedId()), true, true)
+                    SetEntityInvincible(carryCarcass, true)
+                    SetEntityHealth(carryCarcass, 0)
+                    local pos = Config.carcassPos[heaviestCarcass]
+                    AttachEntityToEntity(carryCarcass, PlayerPedId(),11816, pos.xPos, pos.yPos, pos.zPos, pos.xRot, pos.yRot, pos.zRot, false, false, false, true, 2, true)
+                    PlayCarryAnim()
+                end
+            else
+                DeleteEntity(carryCarcass)
+                carryCarcass = 0
+                ClearPedSecondaryTask(PlayerPedId())
+            end
+        end
     end
 end)
 
@@ -134,6 +163,7 @@ function PlayCarryAnim()
         ClearPedSecondaryTask(PlayerPedId())
     end
 end
+
 isCustomControl= false
 function CustomControl()
     if isCustomControl then return end
@@ -171,34 +201,6 @@ end
 
 --------------------- SELL -----------------------------------
 
-exports['qb-target']:AddBoxZone('loyal-hunting_sell', vector3(963.34, -2115.39, 31.47), 6.8, 1, {
-    name="loyal-hunting_sell",
-    heading=355,
-    --debugPoly=true,
-    minZ=31.27,
-    maxZ=34.67
-	}, {
-		options = {
-			{   icon = "fa-solid fa-sack-dollar",
-                label = locale('sell_carcass'),
-				action = function ()
-                    QBCore.Functions.Progressbar("sell_in_progress", locale('sell_in_progress'), 3000, false, false, {
-                        disableMovement = true,
-                        disableCarMovement = true,
-                        disableMouse = false,
-                        disableCombat = false,
-                    }, {}, {}, {}, function()
-                        TriggerServerEvent('loyal-hunting:SellCarcass', Config.carcass[heaviestCarcass])
-                    end)
-                end,
-                canInteract= function ()
-                    return heaviestCarcass ~= 0
-                end
-			},
-		},
-		distance = 2.0
-})
-
 Citizen.CreateThread(function ()
     blip = AddBlipForCoord(963.34, -2115.39)
 	SetBlipSprite(blip, 141)
@@ -217,7 +219,7 @@ local baitLastPlaced = 0
 
 local baitDistanceInUnits = 40
 local spawnDistanceRadius = 30
-local validHuntingZones = {
+local validHuntingZones = { ---------Hunting Zone
     ["Paleto Forest"] = true,
     ["Raton Canyon"] = true,
     ["Mount Chiliad"] = true,
@@ -253,36 +255,27 @@ local HuntingAnimals = {
     -- 'a_c_panther' 
 }
 
-local animals = {
-    {model = "a_c_deer", hash = -664053099, item = "meatdeer", id = 35},
-    {model = "a_c_pig", hash = -1323586730, item = "meatpig", id = 36},
-    {model = "a_c_boar", hash = -832573324, item = "meatboar", id = 37},
-    {model = "a_c_mtlion", hash = 307287994, item = "meatlion",id = 38},
-    {model = "a_c_cow", hash = -50684386, item = "meatcow", id = 39},
-    {model = "a_c_coyote", hash = 1682622302, item = "meatcoyote", id = 40},
-    {model = "a_c_rabbit_01", hash = -541762431, item = "meatrabbit", id = 41},
-    {model = "a_c_pigeon", hash = 111281960, item = "meatbird", id = 42},
-    {model = "a_c_seagull", hash = -745300483, item = "meatseagull", id = 43},
-	{model = "a_c_cormorant", hash = 1457690978, item = "meatcormorant", id = 44},
-	{model = "a_c_chickenhawk", hash = -1430839454, item = "meatchickenhawk", id = 45},
-	{model = "a_c_crow", hash = 402729631, item = "meatcrow", id = 46},
+-- local animals = {
+--     {model = "a_c_deer", hash = -664053099, item = "meatdeer", id = 35},
+--     {model = "a_c_pig", hash = -1323586730, item = "meatpig", id = 36},
+--     {model = "a_c_boar", hash = -832573324, item = "meatboar", id = 37},
+--     {model = "a_c_mtlion", hash = 307287994, item = "meatlion",id = 38},
+--     {model = "a_c_cow", hash = -50684386, item = "meatcow", id = 39},
+--     {model = "a_c_coyote", hash = 1682622302, item = "meatcoyote", id = 40},
+--     {model = "a_c_rabbit_01", hash = -541762431, item = "meatrabbit", id = 41},
+--     {model = "a_c_pigeon", hash = 111281960, item = "meatbird", id = 42},
+--     {model = "a_c_seagull", hash = -745300483, item = "meatseagull", id = 43},
+-- 	{model = "a_c_cormorant", hash = 1457690978, item = "meatcormorant", id = 44},
+-- 	{model = "a_c_chickenhawk", hash = -1430839454, item = "meatchickenhawk", id = 45},
+-- 	{model = "a_c_crow", hash = 402729631, item = "meatcrow", id = 46},
 	
-}
+-- }
 
 exports("huntingArea", function()
     return validHuntingZones
 end)
 
 DecorRegister("HuntingMySpawn", 2)
-
-
-RegisterNetEvent('QBCore:Player:UpdatePlayerData')
-AddEventHandler('QBCore:Player:UpdatePlayerData', function()
-    local data = {}
-    data.position = QBCore.Functions.GetCoords(PlayerPedId())
-    TriggerServerEvent('QBCore:UpdatePlayer', data)
-end)
-
 
 function GetEntityPlayerIsLookingAt(pDistance, pRadius, pFlag, pIgnore)
     local distance = pDistance or 3.0
@@ -411,11 +404,11 @@ AddEventHandler('loyal-hunting:use-item', function(item)
         lastTime = GetGameTimer() + 3000
         if item == "huntingbait" then
             if not isValidZone() then
-                QBCore.Functions.Notify(locale('cant_hun'), "error")
+                notify(locale('cant_hun'), "error")
                 return
             end
             if baitLastPlaced ~= 0 and GetGameTimer() < (baitLastPlaced + Config.CoolDownBait * 1000) then 
-                QBCore.Functions.Notify(locale('cooldown_bait')..Config.CoolDownBait..'seconds!', "error")
+                notify(locale('cooldown_bait')..Config.CoolDownBait..'seconds!', "error")
                 return
             end
             if bussy then
@@ -423,56 +416,56 @@ AddEventHandler('loyal-hunting:use-item', function(item)
                 baitLocation = nil
                 TaskStartScenarioInPlace(PlayerPedId(), "WORLD_HUMAN_GARDENER_PLANT", 0, true)
 				TriggerServerEvent("loyal-hunting:removeItem", item)
-                QBCore.Functions.Progressbar("placing_bait", locale('bait'), 15000, false, true, { 
-                    disableMovement = false,
-					disableCarMovement = false,
-					disableMouse = false,
-					disableCombat = true,
-					disableInventory = true,
-                }, {}, {}, {}, function() -- Done
+                if lib.progressBar({
+                    duration = 15000,
+                    label = locale('bait'),
+                    useWhileDead = false,
+                    canCancel = true,
+                    disable = {
+                        move = true,
+                        car = true,
+                    },
+                }) then 
                     ClearPedTasksImmediately(PlayerPedId())
                     baitLastPlaced = GetGameTimer()
                     baitLocation = GetEntityCoords(PlayerPedId())
-                    QBCore.Functions.Notify(locale('baited'))
+                    notify(locale('baited'))
                     
                     baitDown()
-                    bussy = true 
-                end, function() -- Cancel
                     bussy = true
-                end)
+                else
+                    bussy = true
+                end
             end
         end
     else
-        QBCore.Functions.Notify(locale('cooldown_bait')..Config.CoolDownBait..'seconds!', "error")
+        notify(locale('cooldown_bait')..Config.CoolDownBait..'seconds!', "error")
     end
 end)
 
 function GetClosestPlayerMenu()
-	local player, distance = QBCore.Functions.GetClosestPlayer()
-	if distance ~= -1 and distance <= 5.0 then
-		return true, GetPlayerServerId(player)
-	else
-		return false
-	end
+    if Config.Framework == 'qb-core' then 
+	    local player, distance = QBCore.Functions.GetClosestPlayer()
+        if distance ~= -1 and distance <= 5.0 then
+	    	return true, GetPlayerServerId(player)
+	    else
+	    	return false
+	    end
+    else
+        local player, distance = ESX.Game.GetClosestPlayer()
+        if distance ~= -1 and distance <= 5.0 then
+	    	return true, GetPlayerServerId(player)
+	    else
+	    	return false
+	    end
+    end
 end 
 
 
 -------------------shop--------------------------------------
 local pedSpawned = false
 
-Citizen.CreateThread(function()
-    exports['qb-target']:AddTargetModel("ig_hunter", {
-        options = {
-            {
-                type = "client",
-                event = "loyal-hunting:shop",
-                icon = "fas fa-leaf",
-                label = "Shop",
-            },
-        },
-        distance = 4.0
-    })
-end)
+
 
 Citizen.CreateThread(function()
     while true do
@@ -511,7 +504,11 @@ end)
 
 RegisterNetEvent('loyal-hunting:shop')
 AddEventHandler('loyal-hunting:shop',function()  
-    TriggerServerEvent("inventory:server:OpenInventory", "shop", "hunting", Config.Items)
+    if Config.Inventory == 'ox_inventory' then
+        exports.ox_inventory:openInventory('shop', { type = 'HuntingShop' })
+    else
+        TriggerServerEvent("inventory:server:OpenInventory", "shop", "hunting", Config.QBShop)    
+    end
 end)
 
 ----------------------block fire human----------------------------
@@ -575,3 +572,183 @@ Citizen.CreateThread(function()
     end
 end)
 
+---------------------Target-------------------------------------------
+
+if Config.Target == 'qb-target' then
+    exports['qb-target']:AddTargetModel(animals, {
+        options = {
+        {   icon = "fa-solid fa-paw",
+            label = locale('pickup_carcass'),
+            item = 'huntingknife',
+            action = function (entity)
+                local retval, bone = GetPedLastDamageBone(entity)
+                TaskTurnPedToFaceEntity(PlayerPedId(), entity, -1)
+                Wait(500)
+                local found, player = GetClosestPlayerMenu()
+                if not isValidZone() then
+                    notify(locale('cant_hun'), "error")
+                    return
+                end
+                if found then
+                    notify(locale('near_human'), "error")
+                    return
+                end
+                if lib.progressBar({
+                    duration = 3000,
+                    label = locale('pickup_carcass'),
+                    useWhileDead = false,
+                    canCancel = true,
+                    disable = {
+                        move = true,
+                        car = true,
+                    },
+                    anim = {
+                        dict = 'amb@medic@standing@kneel@idle_a',
+                        clip = 'idle_a'
+                    },
+                }) then 
+                    TriggerServerEvent('loyal-hunting:harvestCarcass',NetworkGetNetworkIdFromEntity(entity),bone)
+                end
+            end,
+            canInteract = function (entity)
+                return IsEntityDead(entity) 
+                -- return IsEntityDead(entity) and not IsEntityAMissionEntity(entity)
+            end,
+        } },
+        distance = 2.0
+    })
+
+    exports['qb-target']:AddBoxZone('loyal-hunting_sell', vector3(963.34, -2115.39, 31.47), 6.8, 1, {
+        name="loyal-hunting_sell",
+        heading=355,
+        --debugPoly=true,
+        minZ=31.27,
+        maxZ=34.67
+    	}, {
+    		options = {
+    			{   icon = "fa-solid fa-sack-dollar",
+                    label = locale('sell_carcass'),
+    				action = function ()
+                        if lib.progressBar({
+                            duration = 3000,
+                            label = locale('sell_in_progress'),
+                            useWhileDead = false,
+                            canCancel = true,
+                            disable = {
+                                move = true,
+                                car = true,
+                            },
+                        }) then 
+                            TriggerServerEvent('loyal-hunting:SellCarcass', Config.carcass[heaviestCarcass])
+                        end
+                    end,
+                    canInteract= function ()
+                        return heaviestCarcass ~= 0
+                    end
+    			},
+    		},
+    		distance = 2.0
+    })
+
+    Citizen.CreateThread(function()
+        exports['qb-target']:AddTargetModel("ig_hunter", {
+            options = {
+                {
+                    type = "client",
+                    event = "loyal-hunting:shop",
+                    icon = "fas fa-leaf",
+                    label = "Shop",
+                },
+            },
+            distance = 4.0
+        })
+    end)
+elseif Config.Target == 'ox_target' then
+        exports.ox_target:addModel(animals, {
+            {
+            icon = "fa-solid fa-paw",
+            label = locale('pickup_carcass'),
+            item = 'huntingknife',
+            onSelect = function (entity)
+                print(json.encode(entity))
+                local retval, bone = GetPedLastDamageBone(entity.entity)
+                TaskTurnPedToFaceEntity(PlayerPedId(), entity.entity, -1)
+                Wait(500)
+                local found, player = GetClosestPlayerMenu()
+                if not isValidZone() then
+                    notify(locale('cant_hun'), "error")
+                    return
+                end
+                if found then
+                    notify(locale('near_human'), "error")
+                    return
+                end
+                if lib.progressBar({
+                    duration = 3000,
+                    label = locale('pickup_carcass'),
+                    useWhileDead = false,
+                    canCancel = true,
+                    disable = {
+                        move = true,
+                        car = true,
+                    },
+                    anim = {
+                        dict = 'amb@medic@standing@kneel@idle_a',
+                        clip = 'idle_a'
+                    },
+                }) then 
+                    TriggerServerEvent('loyal-hunting:harvestCarcass',NetworkGetNetworkIdFromEntity(entity.entity),bone)
+                end
+            end,
+            canInteract = function (entity)
+                print(json.encode(entity))
+                return IsEntityDead(entity) 
+                -- return IsEntityDead(entity) and not IsEntityAMissionEntity(entity)
+            end,
+            distance = 2.0
+            }
+        })
+
+        exports.ox_target:addBoxZone({
+            coords = vector3(963.34, -2115.39, 31.47),
+            size = vector3(6.8, 1, 3),
+            rotation = 355,
+            name="loyal-hunting_sell",
+            options = {
+                {   icon = "fa-solid fa-sack-dollar",
+                    label = locale('sell_carcass'),
+                    onSelect = function ()
+                        if lib.progressBar({
+                            duration = 3000,
+                            label = locale('sell_in_progress'),
+                            useWhileDead = false,
+                            canCancel = true,
+                            disable = {
+                                move = true,
+                                car = true,
+                            },
+                        }) then 
+                            TriggerServerEvent('loyal-hunting:SellCarcass', Config.carcass[heaviestCarcass])
+                        end
+                    end,
+                    canInteract= function ()
+                        return heaviestCarcass ~= 0
+                    end,
+                    distance = 2.0
+                },
+            },
+        })
+
+        exports.ox_target:addModel("ig_hunter", {
+            {
+                icon = "fas fa-leaf",
+                label = "Shop",
+                event = "loyal-hunting:shop",
+                distance = 4.0
+            },
+        }
+        )
+
+else
+    print('Your Target Unsupported')
+end

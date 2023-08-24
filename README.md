@@ -15,24 +15,29 @@ With this resource, you will be able to do the following:
 - Animation when carrying animals in inventory
 - The shop sells the necessary items for hunting
 - Anti gun fire human
-
+- Hunting Zone
 
 ## Supported Frameworks
 
 - QBCore
+- ESX
 
 ## Dependencies
 
 <a href='https://github.com/overextended/ox_lib/releases/'>Ox Lib</a> 
 <a href='https://github.com/qbcore-framework/qb-target'>QB Target</a> 
+<a href='https://github.com/overextended/ox_target'>Ox Target</a> 
+<a href='https://github.com/overextended/ox_inventory'>Ox Inventory</a> 
+
 
 ## Installation
 
 <p>Drag the images in the img folder into your inventory script.</p>
+<p>Config suitable for your resource</p>
 <p>Add the items for your framework from the items folder.</p>
 
 ```Lua
---hunting
+--qb-core
     ['huntingbait'] 						 = {['name'] = 'huntingbait', 			 	  	  	['label'] = 'Animal Bait', 	['weight'] = 200, 		['type'] = 'item', 		['image'] = 'np_huntingbait.png', 				['unique'] = false, 	['useable'] = true, 	['shouldClose'] = true,   ['combinable'] = nil,   ['description'] = ''},
     ['huntingknife'] 						 = {['name'] = 'huntingknife', 			 	  	  	['label'] = 'Hunting Knife', 	['weight'] = 200, 		['type'] = 'item', 		['image'] = 'huntingknife.png', 				['unique'] = true, 	['useable'] = true, 	['shouldClose'] = true,   ['combinable'] = nil,   ['description'] = ''},
 
@@ -65,3 +70,106 @@ With this resource, you will be able to do the following:
     ['carcass_rabbit3'] 						 = {['name'] = 'carcass_rabbit3', 			 	  	  	['label'] = 'Carcass Rabbit', 	['weight'] = 50000, 		['type'] = 'item', 		['image'] = 'carcass_rabbit3.png', 				['unique'] = false, 	['useable'] = true, 	['shouldClose'] = true,   ['combinable'] = nil,   ['description'] = ''},
 ```
 
+```Lua
+--ox_inventory
+    ['huntingbait'] = {
+		label = 'Animal Bait',
+		weight = 200,
+	},
+	
+	['huntingknife'] = {
+		label = 'Hunting Knife',
+		weight = 200,
+	},
+
+	['carcass_boar1'] = {
+		label = 'Carcass Boar',
+		weight = 50000,
+	},
+	['carcass_boar2'] = {
+		label = 'Carcass Boar',
+		weight = 50000,
+	},
+	['carcass_boar3'] = {
+		label = 'Carcass Boar',
+		weight = 50000,
+	},
+
+	['carcass_hawk1'] = {
+		label = 'Carcass Hawk',
+		weight = 50000,
+	},
+	['carcass_hawk2'] = {
+		label = 'Carcass Hawk',
+		weight = 50000,
+	},
+	['carcass_hawk3'] = {
+		label = 'Carcass Hawk',
+		weight = 50000,
+	},
+
+	['carcass_cormorant1'] = {
+		label = 'Carcass Cormorant',
+		weight = 50000,
+	},
+	['carcass_cormorant2'] = {
+		label = 'Carcass Cormorant',
+		weight = 50000,
+	},
+	['carcass_cormorant3'] = {
+		label = 'Carcass Cormorant',
+		weight = 50000,
+	},
+
+	['carcass_coyote1'] = {
+		label = 'Carcass Coyote',
+		weight = 50000,
+	},
+	['carcass_coyote2'] = {
+		label = 'Carcass Coyote',
+		weight = 50000,
+	},
+	['carcass_coyote3'] = {
+		label = 'Carcass Coyote',
+		weight = 50000,
+	},
+
+	['carcass_deer1'] = {
+		label = 'Carcass Deer',
+		weight = 50000,
+	},
+	['carcass_deer2'] = {
+		label = 'Carcass Deer',
+		weight = 50000,
+	},
+	['carcass_deer3'] = {
+		label = 'Carcass Deer',
+		weight = 50000,
+	},
+
+	['carcass_mtlion1'] = {
+		label = 'Carcass Mtlion',
+		weight = 50000,
+	},
+	['carcass_mtlion2'] = {
+		label = 'Carcass Mtlion',
+		weight = 50000,
+	},
+	['carcass_mtlion3'] = {
+		label = 'Carcass Mtlion',
+		weight = 50000,
+	},
+
+	['carcass_rabbit1'] = {
+		label = 'Carcass Rabbit',
+		weight = 50000,
+	},
+	['carcass_rabbit2'] = {
+		label = 'Carcass Rabbit',
+		weight = 50000,
+	},
+	['carcass_rabbit3'] = {
+		label = 'Carcass Rabbit',
+		weight = 50000,
+	},
+```

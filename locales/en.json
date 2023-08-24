@@ -11,5 +11,6 @@
     "cooldown_bait": "You can order new bait later",
     "bait": "Placing bait...",
     "baited": "Bait placed, now go away and wait patiently!",
+    "inventory_full": "Your inventory full"
 
 }

@@ -2,9 +2,11 @@ Config = {}
 
 Config.CoolDownBait = 60 --seconds
 
-Config.Core = 'qb-core'
+Config.Framework = 'qb-core' -- 'qb-core', 'esx'
 
-Config.Inventory = 'lj-inventory' -- 'lj-inventory', 'qb-inventory'
+Config.Inventory = 'lj-inventory' -- 'lj-inventory', 'qb-inventory', 'ox_inventory' 
+
+Config.Target = 'qb-target' -- 'qb-target', 'ox_target'
 
 Config.carcass  = {
     [`a_c_boar`]=           'carcass_boar',
@@ -60,7 +62,7 @@ Config.PedHash = `ig_hunter`
 Config.PedCoords = vector3(-679.07, 5834.42, 16.33)
 Config.PedCoordsHeading = 126.27
 
-Config.Items = {
+Config.QBShop = {-----for qbcore and qb inventory
     label = "Shop",
     slots = 20,
     items = {
@@ -97,5 +99,12 @@ Config.Items = {
             slot = 4,
         },
     },
+}
+
+Config.OXShop = { -- for ox_inventory
+    { name = 'huntingbait', price = 25 },
+    { name = 'huntingknife', price = 500 },
+    { name = 'weapon_sniperrifle', price = 2500 },
+    { name = 'ammo-sniper', price = 100 },
 }
 
