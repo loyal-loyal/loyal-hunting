@@ -24,10 +24,10 @@ With this resource, you will be able to do the following:
 
 ## Dependencies
 
-<a href='https://github.com/overextended/ox_lib/releases/'>Ox Lib</a> 
-<a href='https://github.com/qbcore-framework/qb-target'>QB Target</a> 
-<a href='https://github.com/overextended/ox_target'>Ox Target</a> 
-<a href='https://github.com/overextended/ox_inventory'>Ox Inventory</a> 
+<a href='https://github.com/overextended/ox_lib/releases/'>Ox Lib</a></br> 
+<a href='https://github.com/qbcore-framework/qb-target'>QB Target</a></br> 
+<a href='https://github.com/overextended/ox_target'>Ox Target</a></br> 
+<a href='https://github.com/overextended/ox_inventory'>Ox Inventory</a>
 
 
 ## Installation
